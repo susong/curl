@@ -262,7 +262,7 @@ my $has_multissl;   # set if build with MultiSSL support
 my $has_manual;     # set if built with built-in manual
 my $has_win32;      # set if built for Windows
 my $has_mingw;      # set if built with MinGW (as opposed to MinGW-w64)
-my $has_hyper;      # set if built with Hyper
+my $has_hyper = 0;  # set if built with Hyper
 
 # this version is decided by the particular nghttp2 library that is being used
 my $h2cver = "h2c";
@@ -3582,15 +3582,41 @@ sub singletest {
     my $otest = "log/test$testnum";
     open(D, ">$otest");
     my $diff;
+    my $show = 1;
     for my $s (@entiretest) {
         my $f = $s;
-        subVariables(\$s, "%");
-        subBase64(\$s);
-        subNewlines(\$s) if($has_hyper);
-        if($f ne $s) {
+        if($s =~ /^ *%if (.*)/) {
+            my $cond = $1;
+            my $rev = 0;
+
+            if($cond =~ /^!(.*)/) {
+                $cond = $1;
+                $rev = 1;
+            }
+            $rev ^= $feature{$cond};
+            $show = $rev;
+            next;
+        }
+        elsif($s =~ /^ *%else/) {
+            $show ^= 1;
+            next;
+        }
+        elsif($s =~ /^ *%endif/) {
+            $show = 1;
+            next;
+        }
+        if($show) {
+            subVariables(\$s, "%");
+            subBase64(\$s);
+            subNewlines(\$s) if($has_hyper);
+            if($f ne $s) {
+                $diff++;
+            }
+            print D $s;
+        }
+        else {
             $diff++;
         }
-        print D $s;
     }
     close(D);
 
