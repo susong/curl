@@ -1318,6 +1318,7 @@ if(USE_MANUAL)
 endif()
 
 add_subdirectory(lib)
+add_subdirectory(docs)
 
 if(BUILD_CURL_EXE)
   add_subdirectory(src)
